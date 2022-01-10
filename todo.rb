@@ -2,6 +2,7 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
+require 'sinatra/content_for'
 require 'tilt/erubis'
 
 configure do
@@ -45,12 +46,39 @@ post '/lists' do
     session[:error] = error
     erb :new_list, layout: :layout
   else
-    session[:lists] << { name: list_name, todos: [] }
+    session[:lists] << { name: list_name, todos: ["lettuce", "meat"]}
     session[:success] = 'The list has been created.'
     redirect '/lists'
   end
 end
 
-get 'lists/1' do
-  'View single list'
+# Display list items, with new item form
+get '/lists/:id' do
+  id = params[:id].to_i
+  @list = session[:lists][id]
+  erb :list_test, layout: :layout
+  # @number = id.to_i
+  # @todos = session[:lists][@number][:todos]
+  # erb :list, layout: :layout
+end
+
+get '/list/:id/edit' do
+  'Hello World'
+end
+
+post '/lists/:id' do |id|
+  # todo_name = params[:todo_name]
+
+  # @number = id.to_i
+  
+  # lists = session[:lists]
+  # list = lists[@number]
+  # if list == nil
+  #   redirect '/lists'
+  # end
+  # @todos = list[:todos]
+
+  # todo_name = params[:todo_name]
+  # @todos << todo_name
+  # redirect '/lists/<%= @number %>'
 end
