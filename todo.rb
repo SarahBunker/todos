@@ -114,6 +114,7 @@ post '/lists/:list_id/todos' do
   end
 end
 
+# Delete a todo from a list
 post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params[:list_id].to_i
   @list = session[:lists][@list_id]
@@ -121,5 +122,18 @@ post '/lists/:list_id/todos/:todo_id/delete' do
 
   @list[:todos].delete_at(@todo_id)
   session[:success] = 'The todo has been deleted.'
+  redirect "/lists/#{@list_id}"
+end
+
+# Update status of todo
+post '/lists/:list_id/todos/:todo_id' do
+  @list_id = params[:list_id].to_i
+  @list = session[:lists][@list_id]
+  @todo_id = params[:todo_id].to_i
+  @todo = @list[:todos][@todo_id]
+
+  @todo[:completed] = (params[:completed] == 'true')
+
+  session[:success] = 'The todo has been updated.'
   redirect "/lists/#{@list_id}"
 end
