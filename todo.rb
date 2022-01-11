@@ -10,6 +10,24 @@ configure do
   set :session_secret, 'secret'
 end
 
+helpers do
+  def todos_count(list)
+    list[:todos].size
+  end
+
+  def todos_remaining(list)
+    list[:todos].count { |todo| !todo[:completed] }
+  end
+
+  def completed_list?(list)
+    todos_count(list).positive? && todos_remaining(list).zero?
+  end
+
+  def list_class(list)
+    'complete' if completed_list?(list)
+  end
+end
+
 before do
   session[:lists] ||= []
 end
@@ -133,7 +151,6 @@ post '/lists/:list_id/complete_all' do
   @list[:todos].each do |todo|
     todo[:completed] = true
   end
-  # @todo[:completed] = (params[:completed] == 'true')
 
   session[:success] = 'All todos have been completed.'
   redirect "/lists/#{@list_id}"
