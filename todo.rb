@@ -38,6 +38,11 @@ def error_for_list_name(name)
   end
 end
 
+# Return an error message if todo is invalid. Return nill if todo is valid.
+def error_for_todo_name(name)
+  'Todo must be between 1 and 100 characters.' unless (1..100).cover? name.size
+end
+
 # Create a new list
 post '/lists' do
   list_name = params[:list_name].strip
@@ -54,15 +59,15 @@ end
 
 # Display list items, with new item form
 get '/lists/:id' do
-  id = params[:id].to_i
-  @list = session[:lists][id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
   erb :list, layout: :layout
 end
 
 # Edit an existing todo list
 get '/lists/:id/edit' do
-  id = params[:id].to_i
-  @list = session[:lists][id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
 
   erb :list_edit, layout: :layout
 end
@@ -70,8 +75,8 @@ end
 # Update an existing todo list
 post '/lists/:id' do
   list_name = params[:list_name].strip
-  id = params[:id].to_i
-  @list = session[:lists][id]
+  @list_id = params[:id].to_i
+  @list = session[:lists][@list_id]
 
   error = error_for_list_name(list_name)
   if error
@@ -84,6 +89,7 @@ post '/lists/:id' do
   end
 end
 
+# Delete a list
 post '/lists/:id/delete' do
   id = params[:id].to_i
   session[:lists].delete_at(id)
@@ -91,19 +97,19 @@ post '/lists/:id/delete' do
   redirect '/lists'
 end
 
-post '/lists/:id' do |id|
-  # todo_name = params[:todo_name]
+# Add a todo to a list
+post '/lists/:list_id/todos' do
+  @list_id = params[:list_id].to_i
+  @list = session[:lists][@list_id]
+  todo = params[:todo].strip
 
-  # @number = id.to_i
-
-  # lists = session[:lists]
-  # list = lists[@number]
-  # if list == nil
-  #   redirect '/lists'
-  # end
-  # @todos = list[:todos]
-
-  # todo_name = params[:todo_name]
-  # @todos << todo_name
-  # redirect '/lists/<%= @number %>'
+  error = error_for_todo_name(todo)
+  if error
+    session[:error] = error
+    erb :list, layout: :layout
+  else
+    @list[:todos] << { name: todo, completed: false }
+    session[:success] = 'The todo was added.'
+    redirect "/lists/#{@list_id}"
+  end
 end
