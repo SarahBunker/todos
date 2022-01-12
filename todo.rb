@@ -26,6 +26,20 @@ helpers do
   def list_class(list)
     'complete' if completed_list?(list)
   end
+
+  def sort_lists(lists)
+    complete_lists, incomplete_lists = lists.partition { |list| completed_list?(list) }
+
+    incomplete_lists.each { |list| yield list, lists.index(list) }
+    complete_lists.each { |list| yield list, lists.index(list) }
+  end
+
+  def sort_todos(todos)
+    complete_todos, incomplete_todos = todos.partition { |todo| todo[:completed] }
+
+    incomplete_todos.each { |todo| yield todo, todos.index(todo) }
+    complete_todos.each { |todo| yield todo, todos.index(todo) }
+  end
 end
 
 before do
