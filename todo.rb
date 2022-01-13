@@ -10,6 +10,10 @@ configure do
   set :session_secret, 'secret'
 end
 
+# configure do
+#   set :erb, :escape_html => true
+# end
+
 helpers do
   def todos_count(list)
     list[:todos].size
