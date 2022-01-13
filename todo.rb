@@ -10,9 +10,9 @@ configure do
   set :session_secret, 'secret'
 end
 
-# configure do
-#   set :erb, :escape_html => true
-# end
+configure do
+  set :erb, :escape_html => true
+end
 
 helpers do
   def todos_count(list)
@@ -93,17 +93,26 @@ post '/lists' do
   end
 end
 
+# Check if list index is valid before loading a list.
+def load_list(index)
+  list = session[:lists][index] if index && session[:lists][index]
+  return list if list
+
+  session[:error] = 'The specified list was not found.'
+  redirect "/lists"
+end
+
 # Display list items, with new item form
 get '/lists/:id' do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   erb :list, layout: :layout
 end
 
 # Edit an existing todo list
 get '/lists/:id/edit' do
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   erb :list_edit, layout: :layout
 end
@@ -112,7 +121,7 @@ end
 post '/lists/:id' do
   list_name = params[:list_name].strip
   @list_id = params[:id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   error = error_for_list_name(list_name)
   if error
@@ -136,7 +145,7 @@ end
 # Add a todo to a list
 post '/lists/:list_id/todos' do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   todo = params[:todo].strip
 
   error = error_for_todo_name(todo)
@@ -153,7 +162,7 @@ end
 # Delete a todo from a list
 post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @todo_id = params[:todo_id].to_i
 
   @list[:todos].delete_at(@todo_id)
@@ -164,7 +173,7 @@ end
 # Complete all tasks in todo list.
 post '/lists/:list_id/complete_all' do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
 
   @list[:todos].each do |todo|
     todo[:completed] = true
@@ -177,7 +186,7 @@ end
 # Update status of todo
 post '/lists/:list_id/todos/:todo_id' do
   @list_id = params[:list_id].to_i
-  @list = session[:lists][@list_id]
+  @list = load_list(@list_id)
   @todo_id = params[:todo_id].to_i
   @todo = @list[:todos][@todo_id]
 
