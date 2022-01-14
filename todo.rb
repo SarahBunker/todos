@@ -79,12 +79,6 @@ def error_for_todo_name(name)
   'Todo must be between 1 and 100 characters.' unless (1..100).cover? name.size
 end
 
-# Return the next list id
-def next_list_id(lists)
-  max = lists.map { |list| list[:id] }.max || 0
-  max + 1
-end
-
 # Create a new list
 post '/lists' do
   list_name = params[:list_name].strip
@@ -93,7 +87,7 @@ post '/lists' do
     session[:error] = error
     erb :new_list, layout: :layout
   else
-    id = next_list_id(session[:lists])
+    id = next_element_id(session[:lists])
     session[:lists] << { id: id, name: list_name, todos: [] }
     session[:success] = 'The list has been created.'
     redirect '/lists'
@@ -102,8 +96,7 @@ end
 
 # Check if list id is valid before loading a list.
 def load_list(list_id)
-  found_list = session[:lists].find { |list| list[:id] ==  list_id }
-  list = found_list if list_id && found_list
+  list = session[:lists].find { |list| list[:id] ==  list_id }
   return list if list
 
   session[:error] = 'The specified list was not found.'
@@ -112,8 +105,8 @@ end
 
 # Display list items, with new item form
 get '/lists/:id' do
-  @list_id = params[:id].to_i
-  @list = load_list(@list_id)
+  id = params[:id].to_i
+  @list = load_list(id)
   erb :list, layout: :layout
 end
 
@@ -143,9 +136,9 @@ post '/lists/:id' do
 end
 
 # Delete a list
-post '/lists/:list_id/delete' do
-  list_id = params[:list_id].to_i
-  session[:lists].reject! { |list| list[:id] == list_id }
+post '/lists/:id/delete' do
+  id = params[:id].to_i
+  session[:lists].reject! { |list| list[:id] == id }
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     '/lists'
   else
@@ -154,9 +147,9 @@ post '/lists/:list_id/delete' do
   end
 end
 
-# Find the largest todo id and return the number one greater.
-def next_todo_id(todos)
-  max = todos.map { |todo| todo[:id] }.max || 0
+# Find the next element id
+def next_element_id(elements)
+  max = elements.map { |element| element[:id] }.max || 0
   max + 1
 end
 
@@ -171,7 +164,7 @@ post '/lists/:list_id/todos' do
     session[:error] = error
     erb :list, layout: :layout
   else
-    id = next_todo_id(@list[:todos])
+    id = next_element_id(@list[:todos])
     @list[:todos] << { id: id, name: todo, completed: false }
     session[:success] = 'The todo was added.'
     redirect "/lists/#{@list_id}"
