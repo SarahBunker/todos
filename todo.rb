@@ -34,8 +34,8 @@ helpers do
   def sort_lists(lists)
     complete_lists, incomplete_lists = lists.partition { |list| completed_list?(list) }
 
-    incomplete_lists.each { |list| yield list, lists.index(list) }
-    complete_lists.each { |list| yield list, lists.index(list) }
+    incomplete_lists.each { |list| yield list }
+    complete_lists.each { |list| yield list }
   end
 
   def sort_todos(todos, &block)
@@ -79,6 +79,12 @@ def error_for_todo_name(name)
   'Todo must be between 1 and 100 characters.' unless (1..100).cover? name.size
 end
 
+# Return the next list id
+def next_list_id(lists)
+  max = lists.map { |list| list[:id] }.max || 0
+  max + 1
+end
+
 # Create a new list
 post '/lists' do
   list_name = params[:list_name].strip
@@ -87,15 +93,17 @@ post '/lists' do
     session[:error] = error
     erb :new_list, layout: :layout
   else
-    session[:lists] << { name: list_name, todos: [] }
+    id = next_list_id(session[:lists])
+    session[:lists] << { id: id, name: list_name, todos: [] }
     session[:success] = 'The list has been created.'
     redirect '/lists'
   end
 end
 
-# Check if list index is valid before loading a list.
-def load_list(index)
-  list = session[:lists][index] if index && session[:lists][index]
+# Check if list id is valid before loading a list.
+def load_list(list_id)
+  found_list = session[:lists].find { |list| list[:id] ==  list_id }
+  list = found_list if list_id && found_list
   return list if list
 
   session[:error] = 'The specified list was not found.'
@@ -135,9 +143,9 @@ post '/lists/:id' do
 end
 
 # Delete a list
-post '/lists/:id/delete' do
-  id = params[:id].to_i
-  session[:lists].delete_at(id)
+post '/lists/:list_id/delete' do
+  list_id = params[:list_id].to_i
+  session[:lists].reject! { |list| list[:id] == list_id }
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     '/lists'
   else
