@@ -41,8 +41,8 @@ helpers do
   def sort_todos(todos)
     complete_todos, incomplete_todos = todos.partition { |todo| todo[:completed] }
 
-    incomplete_todos.each { |todo| yield todo, todos.index(todo) }
-    complete_todos.each { |todo| yield todo, todos.index(todo) }
+    incomplete_todos.each { |todo| yield todo }
+    complete_todos.each { |todo| yield todo }
   end
 end
 
@@ -146,6 +146,12 @@ post '/lists/:id/delete' do
   end
 end
 
+# Find the largest todo id and return the number one greater.
+def next_todo_id(todos)
+  max = todos.map { |todo| todo[:id] }.max || 0
+  max + 1
+end
+
 # Add a todo to a list
 post '/lists/:list_id/todos' do
   @list_id = params[:list_id].to_i
@@ -157,10 +163,20 @@ post '/lists/:list_id/todos' do
     session[:error] = error
     erb :list, layout: :layout
   else
-    @list[:todos] << { name: todo, completed: false }
+    id = next_todo_id(@list[:todos])
+    @list[:todos] << { id: id, name: todo, completed: false }
     session[:success] = 'The todo was added.'
     redirect "/lists/#{@list_id}"
   end
+end
+
+# Get index from :todo_id    # new code
+def todo_id_to_index(todo_id)
+  index = nil
+  @list[:todos].each_with_index do |todo, index|
+    return index if todo[:id] == todo_id
+  end
+  index
 end
 
 # Delete a todo from a list
@@ -169,7 +185,8 @@ post '/lists/:list_id/todos/:todo_id/delete' do
   @list = load_list(@list_id)
   @todo_id = params[:todo_id].to_i
 
-  @list[:todos].delete_at(@todo_id)
+  index = todo_id_to_index(@todo_id) # new code
+  @list[:todos].delete_at(index)  # new code
   if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
     status 204
   else
@@ -196,7 +213,9 @@ post '/lists/:list_id/todos/:todo_id' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
   @todo_id = params[:todo_id].to_i
-  @todo = @list[:todos][@todo_id]
+
+  index = todo_id_to_index(@todo_id) # new code
+  @todo = @list[:todos][index] # new code
 
   @todo[:completed] = (params[:completed] == 'true')
 
