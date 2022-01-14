@@ -183,10 +183,10 @@ end
 post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
-  @todo_id = params[:todo_id].to_i
+  
+  todo_id = params[:todo_id].to_i
+  @list[:todos].reject! { |todo| todo[:id] == todo_id}
 
-  index = todo_id_to_index(@todo_id) # new code
-  @list[:todos].delete_at(index)  # new code
   if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
     status 204
   else
@@ -212,12 +212,10 @@ end
 post '/lists/:list_id/todos/:todo_id' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
-  @todo_id = params[:todo_id].to_i
 
-  index = todo_id_to_index(@todo_id) # new code
-  @todo = @list[:todos][index] # new code
-
-  @todo[:completed] = (params[:completed] == 'true')
+  todo_id = params[:todo_id].to_i
+  todo = @list[:todos].find { |todo| todo[:id] == todo_id }
+  todo[:completed] = (params[:completed] == 'true')
 
   session[:success] = 'The todo has been updated.'
   redirect "/lists/#{@list_id}"
