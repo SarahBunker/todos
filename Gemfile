@@ -2,12 +2,12 @@
 
 source 'https://rubygems.org'
 
-ruby "2.5.1"
+ruby '2.5.1'
 
 gem 'erubis'
 gem 'sinatra', '~>1.4.7'
 gem 'sinatra-contrib'
 
 group :production do
-  gem "puma"
+  gem 'puma'
 end

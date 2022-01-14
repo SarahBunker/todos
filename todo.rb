@@ -11,7 +11,7 @@ configure do
 end
 
 configure do
-  set :erb, :escape_html => true
+  set :erb, escape_html: true
 end
 
 helpers do
@@ -38,11 +38,11 @@ helpers do
     complete_lists.each { |list| yield list, lists.index(list) }
   end
 
-  def sort_todos(todos)
+  def sort_todos(todos, &block)
     complete_todos, incomplete_todos = todos.partition { |todo| todo[:completed] }
 
-    incomplete_todos.each { |todo| yield todo }
-    complete_todos.each { |todo| yield todo }
+    incomplete_todos.each(&block)
+    complete_todos.each(&block)
   end
 end
 
@@ -99,7 +99,7 @@ def load_list(index)
   return list if list
 
   session[:error] = 'The specified list was not found.'
-  redirect "/lists"
+  redirect '/lists'
 end
 
 # Display list items, with new item form
@@ -138,11 +138,11 @@ end
 post '/lists/:id/delete' do
   id = params[:id].to_i
   session[:lists].delete_at(id)
-  if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
-    "/lists"
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    '/lists'
   else
-    session[:success] = "The list has been deleted."
-    redirect "/lists"
+    session[:success] = 'The list has been deleted.'
+    redirect '/lists'
   end
 end
 
@@ -170,27 +170,18 @@ post '/lists/:list_id/todos' do
   end
 end
 
-# Get index from :todo_id    # new code
-def todo_id_to_index(todo_id)
-  index = nil
-  @list[:todos].each_with_index do |todo, index|
-    return index if todo[:id] == todo_id
-  end
-  index
-end
-
 # Delete a todo from a list
 post '/lists/:list_id/todos/:todo_id/delete' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
-  
-  todo_id = params[:todo_id].to_i
-  @list[:todos].reject! { |todo| todo[:id] == todo_id}
 
-  if env["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest"
+  todo_id = params[:todo_id].to_i
+  @list[:todos].reject! { |todo| todo[:id] == todo_id }
+
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     status 204
   else
-    session[:success] = "The todo has been deleted."
+    session[:success] = 'The todo has been deleted.'
     redirect "/lists/#{@list_id}"
   end
 end
@@ -214,7 +205,7 @@ post '/lists/:list_id/todos/:todo_id' do
   @list = load_list(@list_id)
 
   todo_id = params[:todo_id].to_i
-  todo = @list[:todos].find { |todo| todo[:id] == todo_id }
+  todo = @list[:todos].find { |item| item[:id] == todo_id }
   todo[:completed] = (params[:completed] == 'true')
 
   session[:success] = 'The todo has been updated.'
