@@ -31,11 +31,11 @@ helpers do
     'complete' if completed_list?(list)
   end
 
-  def sort_lists(lists)
+  def sort_lists(lists, &block)
     complete_lists, incomplete_lists = lists.partition { |list| completed_list?(list) }
 
-    incomplete_lists.each { |list| yield list }
-    complete_lists.each { |list| yield list }
+    incomplete_lists.each(&block)
+    complete_lists.each(&block)
   end
 
   def sort_todos(todos, &block)
@@ -96,7 +96,7 @@ end
 
 # Check if list id is valid before loading a list.
 def load_list(list_id)
-  list = session[:lists].find { |list| list[:id] ==  list_id }
+  list = session[:lists].find { |a_list| a_list[:id] == list_id }
   return list if list
 
   session[:error] = 'The specified list was not found.'
